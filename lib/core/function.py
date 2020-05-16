@@ -14,6 +14,10 @@ import logging
 import torch
 import numpy as np
 
+import cv2
+import datetime
+import os
+
 from .evaluation import decode_preds, compute_nme
 
 logger = logging.getLogger(__name__)
@@ -186,15 +190,55 @@ def inference(config, data_loader, model):
     count_failure_010 = 0
     end = time.time()
 
+    draw_result = True
+
     with torch.no_grad():
         for i, (inp, target, meta) in enumerate(data_loader):
             data_time.update(time.time() - end)
+
+            a = datetime.datetime.now()
             output = model(inp)
+            b = datetime.datetime.now()
+            c = b - a
+            print(c.microseconds / 1000.0, 'ms...')
+
             score_map = output.data.cpu()
             preds = decode_preds(score_map, meta['center'], meta['scale'], [64, 64])
 
             # NME
             nme_temp = compute_nme(preds, meta)
+
+            if draw_result:
+                for j in range(inp.size(0)):
+                    #im = inp[j].numpy()
+                    #im = np.transpose(im, (1,2,0))
+                    #im = 255.0 * ([0.229, 0.224, 0.225] * im + [0.485, 0.456, 0.406])
+                    #im = im.astype(np.float32)
+                    #im = cv2.cvtColor(im, cv2.COLOR_RGB2BGR)
+                    #im = cv2.resize(im, (1024, 1024))
+
+                    im_name = meta['img_name'][j]
+                    im = cv2.imread('D:/Github/HRNet-Facial-Landmark-Detection/' + im_name)
+
+                    pts = preds[j].numpy()
+
+                    bbox = cv2.boundingRect(pts)
+
+                    l = int(max(bbox[0] - 0.5 * bbox[2] / 2.0, 0))
+                    t = int(max(bbox[1] - 0.5 * bbox[3] / 2.0, 0))
+                    r = int(bbox[0] + bbox[2] + 0.5 * bbox[2] / 2.0)
+                    b = int(bbox[1] + bbox[3] + 0.5 * bbox[3] / 2.0)
+
+                    im = im[t:b, l:r, ...]
+
+                    ratio = 1024.0 / im.shape[1]
+                    im = cv2.resize(im, None, fx=ratio, fy=ratio)
+
+                    for k in pts:
+                        im = cv2.circle(im, (int(ratio*(k[0] - l)), int(ratio*(k[1] - t))), 3, (0,255,0),-1,lineType=8)
+                        #im = cv2.circle(im, (int(ratio*(k[0] - l)), int(ratio*(k[1] - t))), 2, (255,0,0),-1,lineType=8)
+
+                    cv2.imwrite('C:/Users/zirga/Desktop/hrnet_results/' + os.path.basename(im_name), im)
 
             failure_008 = (nme_temp > 0.08).sum()
             failure_010 = (nme_temp > 0.10).sum()

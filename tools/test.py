@@ -13,6 +13,10 @@ import torch.nn as nn
 import torch.backends.cudnn as cudnn
 from torch.utils.data import DataLoader
 import sys
+sys.argv.append('--cfg')
+sys.argv.append('experiments/300w/face_alignment_300w_hrnet_w18.yaml')
+sys.argv.append('--model-file')
+sys.argv.append('hrnetv2_pretrained/HR18-300W.pth')
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 import lib.models as models
 from lib.config import config, update_config
@@ -69,9 +73,9 @@ def main():
     test_loader = DataLoader(
         dataset=dataset_type(config,
                              is_train=False),
-        batch_size=config.TEST.BATCH_SIZE_PER_GPU*len(gpus),
+        batch_size=1,#config.TEST.BATCH_SIZE_PER_GPU*len(gpus),
         shuffle=False,
-        num_workers=config.WORKERS,
+        num_workers=0,#config.WORKERS,
         pin_memory=config.PIN_MEMORY
     )
 

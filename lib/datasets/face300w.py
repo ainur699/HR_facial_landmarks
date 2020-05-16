@@ -92,7 +92,7 @@ class Face300W(data.Dataset):
         center = torch.Tensor(center)
 
         meta = {'index': idx, 'center': center, 'scale': scale,
-                'pts': torch.Tensor(pts), 'tpts': tpts}
+                'pts': torch.Tensor(pts), 'tpts': tpts, 'img_name' : image_path}
 
         return img, target, meta
 
