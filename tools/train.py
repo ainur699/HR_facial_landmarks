@@ -98,7 +98,7 @@ def main():
                              is_train=True),
         batch_size=config.TRAIN.BATCH_SIZE_PER_GPU*len(gpus),
         shuffle=config.TRAIN.SHUFFLE,
-        num_workers=config.WORKERS,
+        num_workers=0,#config.WORKERS,
         pin_memory=config.PIN_MEMORY)
 
     val_loader = DataLoader(
