@@ -11,6 +11,7 @@ import scipy.misc
 import numpy as np
 from PIL import Image
 from skimage.transform import resize
+from skimage.transform import rotate
 
 
 MATCHED_PARTS = {
@@ -213,7 +214,9 @@ def crop(img, center, scale, output_size, rot=0):
 
     if not rot == 0:
         # Remove padding
-        new_img = scipy.misc.imrotate(new_img, rot)
+        #imrotate is deprecated! 
+        #new_img = scipy.misc.imrotate(new_img, rot)
+        new_img = rotate(new_img, rot)
         new_img = new_img[pad:-pad, pad:-pad]
     #imresize is deprecated! 
     #new_img = scipy.misc.imresize(new_img, output_size)

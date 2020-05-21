@@ -15,6 +15,8 @@ import torch.backends.cudnn as cudnn
 from tensorboardX import SummaryWriter
 from torch.utils.data import DataLoader
 import sys
+sys.argv.append('--cfg')
+sys.argv.append('experiments/300w/face_alignment_300w_hrnet_w18.yaml')
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 import lib.models as models
 from lib.config import config, update_config
