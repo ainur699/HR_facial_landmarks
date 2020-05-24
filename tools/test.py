@@ -16,7 +16,8 @@ import sys
 sys.argv.append('--cfg')
 sys.argv.append('experiments/300w/face_alignment_300w_hrnet_w18.yaml')
 sys.argv.append('--model-file')
-sys.argv.append('hrnetv2_pretrained/HR18-300W.pth')
+#sys.argv.append('hrnetv2_pretrained/HR18-300W.pth')
+sys.argv.append('output/300W/face_alignment_300w_hrnet_w18/model_best.pth')
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 import lib.models as models
 from lib.config import config, update_config
@@ -61,12 +62,12 @@ def main():
     model = nn.DataParallel(model, device_ids=gpus).cuda()
 
     # load model
-    state_dict = torch.load(args.model_file)
+    state_dict = torch.load(args.model_file).state_dict()
     if 'state_dict' in state_dict.keys():
         state_dict = state_dict['state_dict']
         model.load_state_dict(state_dict)
     else:
-        model.load_state_dict(state_dict)
+        model.module.load_state_dict(state_dict)
 
     dataset_type = get_dataset(config)
 

@@ -10,6 +10,7 @@ from __future__ import division
 from __future__ import print_function
 
 import os
+import shutil
 import logging
 import time
 from pathlib import Path
@@ -88,9 +89,10 @@ def save_checkpoint(states, predictions, is_best,
     torch.save(preds, os.path.join(output_dir, 'current_pred.pth'))
 
     latest_path = os.path.join(output_dir, 'latest.pth')
-    if os.path.islink(latest_path):
-        os.remove(latest_path)
-    os.symlink(os.path.join(output_dir, filename), latest_path)
+    #if os.path.islink(latest_path):
+    #    os.remove(latest_path)
+    #os.symlink(os.path.join(output_dir, filename), latest_path)
+    shutil.copy(os.path.join(output_dir, filename), latest_path)
 
     if is_best and 'state_dict' in states.keys():
         torch.save(states['state_dict'].module, os.path.join(output_dir, 'model_best.pth'))

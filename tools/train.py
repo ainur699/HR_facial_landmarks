@@ -72,11 +72,11 @@ def main():
     if config.TRAIN.RESUME:
         model_state_file = os.path.join(final_output_dir,
                                         'latest.pth')
-        if os.path.islink(model_state_file):
+        if os.path.exists(model_state_file):
             checkpoint = torch.load(model_state_file)
             last_epoch = checkpoint['epoch']
             best_nme = checkpoint['best_nme']
-            model.load_state_dict(checkpoint['state_dict'])
+            model.module.load_state_dict(checkpoint['state_dict'].module.state_dict())
             optimizer.load_state_dict(checkpoint['optimizer'])
             print("=> loaded checkpoint (epoch {})"
                   .format(checkpoint['epoch']))
@@ -100,7 +100,7 @@ def main():
                              is_train=True),
         batch_size=config.TRAIN.BATCH_SIZE_PER_GPU*len(gpus),
         shuffle=config.TRAIN.SHUFFLE,
-        num_workers=0,#config.WORKERS,
+        #num_workers=config.WORKERS,
         pin_memory=config.PIN_MEMORY)
 
     val_loader = DataLoader(
@@ -108,7 +108,7 @@ def main():
                              is_train=False),
         batch_size=config.TEST.BATCH_SIZE_PER_GPU*len(gpus),
         shuffle=False,
-        num_workers=config.WORKERS,
+        #num_workers=config.WORKERS,
         pin_memory=config.PIN_MEMORY
     )
 
