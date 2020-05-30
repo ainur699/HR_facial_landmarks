@@ -70,7 +70,7 @@ def train(config, train_loader, model, critertion, optimizer,
 
         # NME
         score_map = output.data.cpu()
-        preds = decode_preds(score_map, meta['center'], meta['scale'], [64, 64])
+        preds = decode_preds(score_map, meta['center'], meta['scale'], config.MODEL.HEATMAP_SIZE)
 
         nme_batch = compute_nme(preds, meta)
         nme_batch_sum = nme_batch_sum + np.sum(nme_batch)
@@ -135,7 +135,7 @@ def validate(config, val_loader, model, criterion, epoch, writer_dict):
             # loss
             loss = criterion(output, target)
 
-            preds = decode_preds(score_map, meta['center'], meta['scale'], [64, 64])
+            preds = decode_preds(score_map, meta['center'], meta['scale'], config.MODEL.HEATMAP_SIZE)
             # NME
             nme_temp = compute_nme(preds, meta)
             # Failure Rate under different threshold
@@ -203,7 +203,8 @@ def inference(config, data_loader, model):
             print(c.microseconds / 1000.0, 'ms...')
 
             score_map = output.data.cpu()
-            preds = decode_preds(score_map, meta['center'], meta['scale'], [64, 64])
+            #score_map = target.data.cpu()
+            preds = decode_preds(score_map, meta['center'], meta['scale'], config.MODEL.HEATMAP_SIZE)
 
             # NME
             nme_temp = compute_nme(preds, meta)
@@ -236,8 +237,6 @@ def inference(config, data_loader, model):
 
                     for k in pts:
                         im = cv2.circle(im, (int(ratio*(k[0] - l)), int(ratio*(k[1] - t))), 3, (0,255,0),-1,lineType=8)
-                        #im = cv2.circle(im, (int(ratio*(k[0] - l)), int(ratio*(k[1] - t))), 2, (255,0,0),-1,lineType=8)
-
                     cv2.imwrite('C:/Users/zirga/Desktop/hrnet_results/' + os.path.basename(im_name), im)
 
             failure_008 = (nme_temp > 0.08).sum()
