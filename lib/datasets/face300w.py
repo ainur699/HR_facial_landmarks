@@ -13,6 +13,7 @@ import pandas as pd
 from PIL import Image
 import numpy as np
 
+import cv2
 from ..utils.transforms import fliplr_joints, crop, generate_target, transform_pixel
 
 
@@ -62,6 +63,11 @@ class Face300W(data.Dataset):
         nparts = pts.shape[0]
         img = np.array(Image.open(image_path).convert('RGB'), dtype=np.float32)
 
+        # debug
+        #for pt in pts:
+        #   img = cv2.circle(img, (int(pt[0]), int(pt[1])), 1, (0,255,0),-1,lineType=8)
+        #cv2.imwrite('label_init.png', img)
+
         r = 0
         if self.is_train:
             scale = scale * (random.uniform(1 - self.scale_factor,
@@ -80,10 +86,16 @@ class Face300W(data.Dataset):
 
         for i in range(nparts):
             if tpts[i, 1] > 0:
-                tpts[i, 0:2] = transform_pixel(tpts[i, 0:2]+1, center,
+                tpts[i, 0:2] = transform_pixel(tpts[i, 0:2], center,
                                                scale, self.output_size, rot=r)
-                target[i] = generate_target(target[i], tpts[i]-1, self.sigma,
+                target[i] = generate_target(target[i], tpts[i], self.sigma,
                                             label_type=self.label_type)
+
+        # debug
+        #for pt in tpts:
+        #    img = cv2.circle(img, (int(4 * pt[0]), int(4 * pt[1])), 1, (0,255,0),-1,lineType=8)
+        #cv2.imwrite('label.png', img)
+
         img = img.astype(np.float32)
         img = (img/255.0 - self.mean) / self.std
         img = img.transpose([2, 0, 1])

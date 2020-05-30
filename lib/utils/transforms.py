@@ -150,9 +150,9 @@ def transform_pixel(pt, center, scale, output_size, invert=0, rot=0):
     t = get_transform(center, scale, output_size, rot=rot)
     if invert:
         t = np.linalg.inv(t)
-    new_pt = np.array([pt[0] - 1, pt[1] - 1, 1.]).T
+    new_pt = np.array([pt[0], pt[1], 1.]).T
     new_pt = np.dot(t, new_pt)
-    return new_pt[:2].astype(int) + 1
+    return np.around(new_pt[:2]).astype(int)
 
 
 def transform_preds(coords, center, scale, output_size):
@@ -190,7 +190,7 @@ def crop(img, center, scale, output_size, rot=0):
     # Upper left point
     ul = np.array(transform_pixel([0, 0], center_new, scale, output_size, invert=1))
     # Bottom right point
-    br = np.array(transform_pixel(output_size, center_new, scale, output_size, invert=1))
+    br = np.array(transform_pixel([output_size[0] - 1, output_size[0] - 1], center_new, scale, output_size, invert=1))
 
     # Padding so that when rotated proper amount of context is included
     pad = int(np.linalg.norm(br - ul) / 2 - float(br[1] - ul[1]) / 2)
