@@ -163,7 +163,10 @@ def transform_preds(coords, center, scale, output_size):
 
 
 def crop(img, center, scale, output_size, rot=0):
-    center_new = center.clone()
+    if isinstance(center, torch.Tensor):
+        center_new = center.clone()
+    else:
+        center_new = center.copy()
 
     # Preprocessing for efficient cropping
     ht, wd = img.shape[0], img.shape[1]

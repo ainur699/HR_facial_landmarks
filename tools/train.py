@@ -16,13 +16,14 @@ from tensorboardX import SummaryWriter
 from torch.utils.data import DataLoader
 import sys
 sys.argv.append('--cfg')
-sys.argv.append('experiments/300w/face_alignment_300w_hrnet_w18.yaml')
+sys.argv.append('experiments/300w/face_alignment_300w_hrnet_w18_precise.yaml')
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 import lib.models as models
 from lib.config import config, update_config
 from lib.datasets import get_dataset
 from lib.core import function
 from lib.utils import utils
+from lib.datasets.face300w_tf import get_300W_dataset
 
 
 def parse_args():
@@ -93,24 +94,34 @@ def main():
             optimizer, config.TRAIN.LR_STEP,
             config.TRAIN.LR_FACTOR, last_epoch-1
         )
-    dataset_type = get_dataset(config)
 
-    train_loader = DataLoader(
-        dataset=dataset_type(config,
-                             is_train=True),
-        batch_size=config.TRAIN.BATCH_SIZE_PER_GPU*len(gpus),
-        shuffle=config.TRAIN.SHUFFLE,
-        #num_workers=config.WORKERS,
-        pin_memory=config.PIN_MEMORY)
+    if 0:
+        dataset_type = get_dataset(config)
 
-    val_loader = DataLoader(
-        dataset=dataset_type(config,
-                             is_train=False),
-        batch_size=config.TEST.BATCH_SIZE_PER_GPU*len(gpus),
-        shuffle=False,
-        #num_workers=config.WORKERS,
-        pin_memory=config.PIN_MEMORY
-    )
+        train_loader = DataLoader(
+            dataset=dataset_type(config,
+                                 is_train=True),
+            batch_size=config.TRAIN.BATCH_SIZE_PER_GPU*len(gpus),
+            shuffle=config.TRAIN.SHUFFLE,
+            #num_workers=config.WORKERS,
+            pin_memory=config.PIN_MEMORY)
+
+        val_loader = DataLoader(
+            dataset=dataset_type(config,
+                                 is_train=False),
+            batch_size=config.TEST.BATCH_SIZE_PER_GPU*len(gpus),
+            shuffle=False,
+            #num_workers=config.WORKERS,
+            pin_memory=config.PIN_MEMORY)
+    else:
+        train_loader = get_300W_dataset(config, is_train=True)
+        train_loader = train_loader.shuffle(512)
+        train_loader = train_loader.batch(config.TRAIN.BATCH_SIZE_PER_GPU*len(gpus))
+        train_loader = train_loader.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
+
+        val_loader = get_300W_dataset(config, is_train=False)
+        val_loader = val_loader.batch(config.TRAIN.BATCH_SIZE_PER_GPU*len(gpus))
+
 
     for epoch in range(last_epoch, config.TRAIN.END_EPOCH):
         lr_scheduler.step()
