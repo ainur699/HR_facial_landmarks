@@ -58,7 +58,12 @@ def train(config, train_loader, model, critertion, optimizer,
 
     end = time.time()
 
-    for i, (inp, target, meta) in enumerate(train_loader):
+    for i, (inp, target, meta) in enumerate(train_loader.as_numpy_iterator()):
+        if not isinstance(inp, torch.Tensor):
+            inp = torch.Tensor(inp)
+        if not isinstance(target, torch.Tensor):
+            target = torch.Tensor(target)
+
         # measure data time
         data_time.update(time.time()-end)
 
@@ -90,7 +95,7 @@ def train(config, train_loader, model, critertion, optimizer,
                   'Speed {speed:.1f} samples/s\t' \
                   'Data {data_time.val:.3f}s ({data_time.avg:.3f}s)\t' \
                   'Loss {loss.val:.5f} ({loss.avg:.5f})\t'.format(
-                      epoch, i, len(train_loader), batch_time=batch_time,
+                      epoch, i, 0, batch_time=batch_time,   #len(train_loader) -> 0
                       speed=inp.size(0)/batch_time.val,
                       data_time=data_time, loss=losses)
             logger.info(msg)
@@ -115,7 +120,7 @@ def validate(config, val_loader, model, criterion, epoch, writer_dict):
     losses = AverageMeter()
 
     num_classes = config.MODEL.NUM_JOINTS
-    predictions = torch.zeros((len(val_loader.dataset), num_classes, 2))
+#    predictions = torch.zeros((len(val_loader.dataset), num_classes, 2))
 
     model.eval()
 
@@ -126,7 +131,12 @@ def validate(config, val_loader, model, criterion, epoch, writer_dict):
     end = time.time()
 
     with torch.no_grad():
-        for i, (inp, target, meta) in enumerate(val_loader):
+        for i, (inp, target, meta) in enumerate(val_loader.as_numpy_iterator()):
+            if not isinstance(inp, torch.Tensor):
+                inp = torch.Tensor(inp)
+            if not isinstance(target, torch.Tensor):
+                target = torch.Tensor(target)
+
             data_time.update(time.time() - end)
             output = model(inp)
             target = target.cuda(non_blocking=True)
@@ -146,8 +156,8 @@ def validate(config, val_loader, model, criterion, epoch, writer_dict):
 
             nme_batch_sum += np.sum(nme_temp)
             nme_count = nme_count + preds.size(0)
-            for n in range(score_map.size(0)):
-                predictions[meta['index'][n], :, :] = preds[n, :, :]
+ #           for n in range(score_map.size(0)):
+ #               predictions[meta['index'][n], :, :] = preds[n, :, :]
 
             losses.update(loss.item(), inp.size(0))
 
@@ -171,7 +181,7 @@ def validate(config, val_loader, model, criterion, epoch, writer_dict):
         writer.add_scalar('valid_nme', nme, global_steps)
         writer_dict['valid_global_steps'] = global_steps + 1
 
-    return nme, predictions
+    return nme#, predictions
 
 
 def inference(config, data_loader, model):

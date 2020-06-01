@@ -37,7 +37,7 @@ def compute_nme(preds, meta):
 
     targets = meta['pts']
     preds = preds.numpy()
-    target = targets.cpu().numpy()
+    target = targets.cpu().numpy() if isinstance(targets, torch.Tensor) else targets
 
     N = preds.shape[0]
     L = preds.shape[1]

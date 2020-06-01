@@ -25,6 +25,8 @@ from lib.core import function
 from lib.utils import utils
 from lib.datasets.face300w_tf import get_300W_dataset
 
+import tensorflow as tf
+
 
 def parse_args():
 
@@ -130,8 +132,8 @@ def main():
                        optimizer, epoch, writer_dict)
 
         # evaluate
-        nme, predictions = function.validate(config, val_loader, model,
-                                             criterion, epoch, writer_dict)
+        nme = function.validate(config, val_loader, model,
+                                             criterion, epoch, writer_dict) #, predictions
 
         is_best = nme < best_nme
         best_nme = min(nme, best_nme)
@@ -143,7 +145,7 @@ def main():
              "epoch": epoch + 1,
              "best_nme": best_nme,
              "optimizer": optimizer.state_dict(),
-             }, predictions, is_best, final_output_dir, 'checkpoint_{}.pth'.format(epoch))
+             }, None, is_best, final_output_dir, 'checkpoint_{}.pth'.format(epoch))
 
     final_model_state_file = os.path.join(final_output_dir,
                                           'final_state.pth')

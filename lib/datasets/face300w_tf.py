@@ -66,6 +66,8 @@ def transform_data(x, y, data_root, is_train, scale_factor, rot_factor, flip, si
 
 
 def get_300W_dataset(cfg, is_train=True):
+    tf.config.set_visible_devices([], 'GPU')
+
     # specify annotation file for dataset
     if is_train:
         csv_file = cfg.DATASET.TRAINSET
