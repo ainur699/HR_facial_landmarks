@@ -94,7 +94,7 @@ def train(config, train_loader, model, critertion, optimizer,
                   'Time {batch_time.val:.3f}s ({batch_time.avg:.3f}s)\t' \
                   'Speed {speed:.1f} samples/s\t' \
                   'Data {data_time.val:.3f}s ({data_time.avg:.3f}s)\t' \
-                  'Loss {loss.val:.5f} ({loss.avg:.5f})\t'.format(
+                  'Loss {loss.val:.6f} ({loss.avg:.5f})\t'.format(
                       epoch, i, 0, batch_time=batch_time,   #len(train_loader) -> 0
                       speed=inp.size(0)/batch_time.val,
                       data_time=data_time, loss=losses)

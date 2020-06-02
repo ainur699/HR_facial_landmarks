@@ -16,6 +16,7 @@ std = np.array([0.229, 0.224, 0.225], dtype=np.float32)
 
 def transform_data(x, y, data_root, is_train, scale_factor, rot_factor, flip, sigma, label_type, input_size, output_size):
     image_path = os.path.join(data_root.encode(), x)
+    image_path = os.path.normpath(image_path) 
     scale = y[0]
     center = [y[1], y[2]]
     pts = y[3:]

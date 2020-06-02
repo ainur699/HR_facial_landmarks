@@ -86,16 +86,18 @@ def main():
         else:
             print("=> no checkpoint found")
 
-    if isinstance(config.TRAIN.LR_STEP, list):
-        lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(
-            optimizer, config.TRAIN.LR_STEP,
-            config.TRAIN.LR_FACTOR, last_epoch-1
-        )
-    else:
-        lr_scheduler = torch.optim.lr_scheduler.StepLR(
-            optimizer, config.TRAIN.LR_STEP,
-            config.TRAIN.LR_FACTOR, last_epoch-1
-        )
+    #if isinstance(config.TRAIN.LR_STEP, list):
+    #    lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(
+    #        optimizer, config.TRAIN.LR_STEP,
+    #        config.TRAIN.LR_FACTOR, -1
+    #    )
+    #else:
+    #    lr_scheduler = torch.optim.lr_scheduler.StepLR(
+    #        optimizer, config.TRAIN.LR_STEP,
+    #        config.TRAIN.LR_FACTOR, -1
+    #    )
+    optimizer.param_groups[0]['lr'] = 0.00001
+    lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=4)
 
     if 0:
         dataset_type = get_dataset(config)
@@ -126,8 +128,6 @@ def main():
 
 
     for epoch in range(last_epoch, config.TRAIN.END_EPOCH):
-        lr_scheduler.step()
-
         function.train(config, train_loader, model, criterion,
                        optimizer, epoch, writer_dict)
 
@@ -135,10 +135,13 @@ def main():
         nme = function.validate(config, val_loader, model,
                                              criterion, epoch, writer_dict) #, predictions
 
+        lr_scheduler.step(nme)
+
         is_best = nme < best_nme
         best_nme = min(nme, best_nme)
 
         logger.info('=> saving checkpoint to {}'.format(final_output_dir))
+        logger.info('Learning rate {}'.format(optimizer.param_groups[0]['lr']))
         print("best:", is_best)
         utils.save_checkpoint(
             {"state_dict": model,
