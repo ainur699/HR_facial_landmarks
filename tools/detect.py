@@ -89,6 +89,7 @@ def main():
 
                 center = [faces[0].center().x, faces[0].center().y]
                 scale = max(faces[0].width(), faces[0].height()) / 200.0
+                scale = 1.25 * scale
 
                 img = crop(img, center, scale, [512, 512])
                 img = (img/255.0 - mean) / std
