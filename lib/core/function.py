@@ -75,7 +75,7 @@ def train(config, train_loader, model, critertion, optimizer,
 
         # NME
         score_map = output.data.cpu()
-        preds = decode_preds(score_map, meta['center'], meta['scale'], config.MODEL.HEATMAP_SIZE)
+        preds = decode_preds(score_map, meta['trf_inv'])
 
         nme_batch = compute_nme(preds, meta)
         nme_batch_sum = nme_batch_sum + np.sum(nme_batch)
@@ -190,7 +190,6 @@ def inference(config, data_loader, model):
     losses = AverageMeter()
 
     num_classes = config.MODEL.NUM_JOINTS
-    predictions = torch.zeros((len(data_loader.dataset), num_classes, 2))
 
     model.eval()
 
@@ -203,7 +202,19 @@ def inference(config, data_loader, model):
     draw_result = True
 
     with torch.no_grad():
-        for i, (inp, target, meta) in enumerate(data_loader):
+        for i, (inp, target, meta) in enumerate(data_loader.as_numpy_iterator()):
+            if not isinstance(inp, torch.Tensor):
+                inp = torch.Tensor(inp)
+            if not isinstance(target, torch.Tensor):
+                target = torch.Tensor(target)
+
+            if inp.dim() < 4:
+                inp = inp[None, :]
+                target = target[None, :]
+                meta['trf_inv'] = meta['trf_inv'][None, :]
+                meta['pts'] = meta['pts'][None, :]
+                meta['img_name'] = [meta['img_name']]
+
             data_time.update(time.time() - end)
 
             a = datetime.datetime.now()
@@ -214,7 +225,8 @@ def inference(config, data_loader, model):
 
             score_map = output.data.cpu()
             #score_map = target.data.cpu()
-            preds = decode_preds(score_map, meta['center'], meta['scale'], config.MODEL.HEATMAP_SIZE)
+
+            preds = decode_preds(score_map, meta['trf_inv'])
 
             # NME
             nme_temp = compute_nme(preds, meta)
@@ -228,7 +240,7 @@ def inference(config, data_loader, model):
                     #im = cv2.cvtColor(im, cv2.COLOR_RGB2BGR)
                     #im = cv2.resize(im, (1024, 1024))
 
-                    im_name = meta['img_name'][j]
+                    im_name = meta['img_name'][j].decode("utf-8")
                     im = cv2.imread('D:/Github/HRNet-Facial-Landmark-Detection/' + im_name)
 
                     pts = preds[j].numpy()
@@ -247,7 +259,7 @@ def inference(config, data_loader, model):
 
                     for k in pts:
                         im = cv2.circle(im, (int(ratio*(k[0] - l)), int(ratio*(k[1] - t))), 3, (0,255,0),-1,lineType=8)
-                    cv2.imwrite('C:/Users/zirga/Desktop/hrnet_results/' + os.path.basename(im_name), im)
+                    cv2.imwrite('D:/results/hrnet_results/' + os.path.basename(im_name), im)
 
             failure_008 = (nme_temp > 0.08).sum()
             failure_010 = (nme_temp > 0.10).sum()
@@ -256,8 +268,6 @@ def inference(config, data_loader, model):
 
             nme_batch_sum += np.sum(nme_temp)
             nme_count = nme_count + preds.size(0)
-            for n in range(score_map.size(0)):
-                predictions[meta['index'][n], :, :] = preds[n, :, :]
 
             # measure elapsed time
             batch_time.update(time.time() - end)
@@ -272,7 +282,7 @@ def inference(config, data_loader, model):
                                 failure_008_rate, failure_010_rate)
     logger.info(msg)
 
-    return nme, predictions
+    return nme
 
 
 

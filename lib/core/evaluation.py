@@ -61,28 +61,12 @@ def compute_nme(preds, meta):
     return rmse
 
 
-def decode_preds(output, center, scale, res):
+def decode_preds(output, trf):
     coords = get_preds(output)  # float type
-
     coords = coords.cpu()
-    # pose-processing
-# TODO
-#    for n in range(coords.size(0)):
-#        for p in range(coords.size(1)):
-#            hm = output[n][p]
-#            px = int(math.floor(coords[n][p][0]))
-#            py = int(math.floor(coords[n][p][1]))
-#            if (px > 1) and (px < res[0]) and (py > 1) and (py < res[1]):
-#                diff = torch.Tensor([hm[py - 1][px] - hm[py - 1][px - 2], hm[py][px - 1]-hm[py - 2][px - 1]])
-#                coords[n][p] += diff.sign() * .25
-#    coords += 0.5
-    preds = coords.clone()
 
     # Transform back
     for i in range(coords.size(0)):
-        preds[i] = transform_preds(coords[i], center[i], scale[i], res)
+        coords[i] = transform_preds(coords[i], trf[i])
 
-    if preds.dim() < 3:
-        preds = preds.view(1, preds.size())
-
-    return preds
+    return coords

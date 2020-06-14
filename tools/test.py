@@ -24,6 +24,7 @@ from lib.config import config, update_config
 from lib.utils import utils
 from lib.datasets import get_dataset
 from lib.core import function
+from lib.datasets.face300w_tf import get_300W_dataset
 
 
 def parse_args():
@@ -69,20 +70,21 @@ def main():
     else:
         model.module.load_state_dict(state_dict)
 
-    dataset_type = get_dataset(config)
 
-    test_loader = DataLoader(
-        dataset=dataset_type(config,
-                             is_train=False),
-        batch_size=1,#config.TEST.BATCH_SIZE_PER_GPU*len(gpus),
-        shuffle=False,
-        num_workers=0,#config.WORKERS,
-        pin_memory=config.PIN_MEMORY
-    )
+    #dataset_type = get_dataset(config)
+    #
+    #test_loader = DataLoader(
+    #    dataset=dataset_type(config,
+    #                         is_train=False),
+    #    batch_size=1,#config.TEST.BATCH_SIZE_PER_GPU*len(gpus),
+    #    shuffle=False,
+    #    num_workers=0,#config.WORKERS,
+    #    pin_memory=config.PIN_MEMORY
+    #)
+    train_loader = get_300W_dataset(config, is_train=True)
+    train_loader.batch(1)
 
-    nme, predictions = function.inference(config, test_loader, model)
-
-    torch.save(predictions, os.path.join(final_output_dir, 'predictions.pth'))
+    nme = function.inference(config, train_loader, model)
 
 
 if __name__ == '__main__':

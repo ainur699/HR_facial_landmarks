@@ -70,7 +70,7 @@ def main():
     criterion = torch.nn.MSELoss(size_average=True).cuda()
 
     optimizer = utils.get_optimizer(config, model)
-    best_nme = 100
+    best_nme = float('inf')
     last_epoch = config.TRAIN.BEGIN_EPOCH
     if config.TRAIN.RESUME:
         model_state_file = os.path.join(final_output_dir,
@@ -96,7 +96,7 @@ def main():
     #        optimizer, config.TRAIN.LR_STEP,
     #        config.TRAIN.LR_FACTOR, -1
     #    )
-    optimizer.param_groups[0]['lr'] = 0.00001
+    optimizer.param_groups[0]['lr'] = 0.001
     lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=4)
 
     if 0:
@@ -128,12 +128,10 @@ def main():
 
 
     for epoch in range(last_epoch, config.TRAIN.END_EPOCH):
-        function.train(config, train_loader, model, criterion,
-                       optimizer, epoch, writer_dict)
+        function.train(config, train_loader, model, criterion, optimizer, epoch, writer_dict)
 
         # evaluate
-        nme = function.validate(config, val_loader, model,
-                                             criterion, epoch, writer_dict) #, predictions
+        nme = function.validate(config, val_loader, model, criterion, epoch, writer_dict) #, predictions
 
         lr_scheduler.step(nme)
 
