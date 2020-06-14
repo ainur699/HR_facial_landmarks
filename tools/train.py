@@ -44,8 +44,7 @@ def main():
 
     args = parse_args()
 
-    logger, final_output_dir, tb_log_dir = \
-        utils.create_logger(config, args.cfg, 'train')
+    logger, final_output_dir, tb_log_dir = utils.create_logger(config, args.cfg, 'train')
 
     logger.info(pprint.pformat(args))
     logger.info(pprint.pformat(config))
@@ -73,8 +72,8 @@ def main():
     best_nme = float('inf')
     last_epoch = config.TRAIN.BEGIN_EPOCH
     if config.TRAIN.RESUME:
-        model_state_file = os.path.join(final_output_dir,
-                                        'latest.pth')
+        model_state_file = os.path.join(final_output_dir, 'latest.pth')
+
         if os.path.exists(model_state_file):
             checkpoint = torch.load(model_state_file)
             last_epoch = checkpoint['epoch']
@@ -86,16 +85,6 @@ def main():
         else:
             print("=> no checkpoint found")
 
-    #if isinstance(config.TRAIN.LR_STEP, list):
-    #    lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(
-    #        optimizer, config.TRAIN.LR_STEP,
-    #        config.TRAIN.LR_FACTOR, -1
-    #    )
-    #else:
-    #    lr_scheduler = torch.optim.lr_scheduler.StepLR(
-    #        optimizer, config.TRAIN.LR_STEP,
-    #        config.TRAIN.LR_FACTOR, -1
-    #    )
     optimizer.param_groups[0]['lr'] = 0.001
     lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=4)
 
@@ -148,10 +137,8 @@ def main():
              "optimizer": optimizer.state_dict(),
              }, None, is_best, final_output_dir, 'checkpoint_{}.pth'.format(epoch))
 
-    final_model_state_file = os.path.join(final_output_dir,
-                                          'final_state.pth')
-    logger.info('saving final model state to {}'.format(
-        final_model_state_file))
+    final_model_state_file = os.path.join(final_output_dir, 'final_state.pth')
+    logger.info('saving final model state to {}'.format(final_model_state_file))
     torch.save(model.module.state_dict(), final_model_state_file)
     writer_dict['writer'].close()
 
