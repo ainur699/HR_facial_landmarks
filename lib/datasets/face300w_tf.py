@@ -16,22 +16,31 @@ std = np.array([0.229, 0.224, 0.225], dtype=np.float32)
 
 def transform_data(x, y, data_root, is_train, scale_factor, rot_factor, flip, sigma, label_type, input_size, output_size):
     image_path = os.path.join(data_root.encode(), x)
-    image_path = os.path.normpath(image_path) 
-    tl = y[0:2]
-    tr = y[2:4]
-    br = y[4:6]
-    pts = y[6:]
-    pts = pts.reshape(-1, 2)
+    image_path = os.path.normpath(image_path)
+    img = np.array(Image.open(image_path).convert('RGB'), dtype=np.float32)
 
-    #r = 0
-    #scale = 1
-    #if is_train:
-    #    scale = scale * (random.uniform(1 - scale_factor, 1 + scale_factor)) if random.random() <= 0.6 else 0
-    #    r = random.uniform(-rot_factor, rot_factor) if random.random() <= 0.6 else 0
-    #    if random.random() <= 0.5 and flip:
-    #        img = np.fliplr(img)
-    #        pts = fliplr_joints(pts, width=img.shape[1], dataset='300W')
-    #        center[0] = img.shape[1] - center[0]
+    tl, tr, br = y[0:2], y[2:4], y[4:6]
+    pts = y[6:].reshape(-1, 2)
+
+    if is_train:
+        scale = random.uniform(1 - scale_factor, 1 + scale_factor) if random.random() <= 0.6 else 1
+        r = random.uniform(-rot_factor, rot_factor) if random.random() <= 0.6 else 0
+        center = 0.5 * (tl + br)
+
+        if random.random() <= 0.5 and flip:
+            img = np.fliplr(img)
+            pts = fliplr_joints(pts, width=img.shape[1], dataset='300W')
+
+            center[0] = img.shape[1] - center[0]
+            tl[0] = img.shape[1] - tl[0]
+            tr[0] = img.shape[1] - tr[0]
+            tl, tr = tr, tl
+            br = 2 * center - tl
+
+        rot_scale_trf = cv2.getRotationMatrix2D(tuple(center), r, scale)
+        src_pt = np.float32([[tl, tr, br]])
+        dst_pt = cv2.transform(src_pt, rot_scale_trf)
+        tl, tr, br = dst_pt[0][0], dst_pt[0][1], dst_pt[0][2]
 
     pt_src = np.float32([tl, tr, br])
     pt_target = np.float32([[0,0], [output_size[0] - 1, 0], [output_size[0] - 1, output_size[1] - 1]])
@@ -50,7 +59,6 @@ def transform_data(x, y, data_root, is_train, scale_factor, rot_factor, flip, si
         tpts[i] = cv2.transform(np.array([[pts[i]]]), trf_pt)[0][0]
         target[i] = generate_target(target[i], tpts[i], sigma, label_type=label_type)
 
-    img = np.array(Image.open(image_path).convert('RGB'), dtype=np.float32)
     img = cv2.warpAffine(img, trf_img, tuple(input_size))
     img = (img/255.0 - mean) / std
     img = img.transpose([2, 0, 1])
@@ -95,6 +103,7 @@ def get_300W_dataset(cfg, is_train=True):
 
     #test
     #for i, (inp, target, meta) in enumerate(dataset.as_numpy_iterator()):
+    #    if i > 10: break
     #    img = inp
     #    img = img.transpose([1, 2, 0])
     #    img = 255 * (img * std + mean)
@@ -102,7 +111,7 @@ def get_300W_dataset(cfg, is_train=True):
     #
     #    for pt in tpts:
     #        img = cv2.circle(img, (int(4 * pt[0]), int(4 * pt[1])), 1, (0,255,0),-1,lineType=8)
-    #    cv2.imwrite('label.png', img)
+    #    cv2.imwrite('log' + str(i) + '.png', img)
 
     return dataset
 
