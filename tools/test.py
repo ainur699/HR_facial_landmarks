@@ -44,11 +44,7 @@ def main():
 
     args = parse_args()
 
-    logger, final_output_dir, tb_log_dir = \
-        utils.create_logger(config, args.cfg, 'test')
-
-    logger.info(pprint.pformat(args))
-    logger.info(pprint.pformat(config))
+    logger, final_output_dir, tb_log_dir = utils.create_logger(config, args.cfg, 'test')
 
     cudnn.benchmark = config.CUDNN.BENCHMARK
     cudnn.determinstic = config.CUDNN.DETERMINISTIC
@@ -81,8 +77,7 @@ def main():
     #    num_workers=0,#config.WORKERS,
     #    pin_memory=config.PIN_MEMORY
     #)
-    train_loader = get_300W_dataset(config, is_train=True)
-    train_loader.batch(1)
+    train_loader = get_300W_dataset(config, is_train=False)
 
     nme = function.inference(config, train_loader, model)
 

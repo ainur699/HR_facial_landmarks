@@ -145,7 +145,7 @@ def validate(config, val_loader, model, criterion, epoch, writer_dict):
             # loss
             loss = criterion(output, target)
 
-            preds = decode_preds(score_map, meta['center'], meta['scale'], config.MODEL.HEATMAP_SIZE)
+            preds = decode_preds(score_map, meta['trf_inv'])
             # NME
             nme_temp = compute_nme(preds, meta)
             # Failure Rate under different threshold
@@ -233,13 +233,6 @@ def inference(config, data_loader, model):
 
             if draw_result:
                 for j in range(inp.size(0)):
-                    #im = inp[j].numpy()
-                    #im = np.transpose(im, (1,2,0))
-                    #im = 255.0 * ([0.229, 0.224, 0.225] * im + [0.485, 0.456, 0.406])
-                    #im = im.astype(np.float32)
-                    #im = cv2.cvtColor(im, cv2.COLOR_RGB2BGR)
-                    #im = cv2.resize(im, (1024, 1024))
-
                     im_name = meta['img_name'][j].decode("utf-8")
                     im = cv2.imread('D:/Github/HRNet-Facial-Landmark-Detection/' + im_name)
 

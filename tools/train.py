@@ -85,7 +85,7 @@ def main():
         else:
             print("=> no checkpoint found")
 
-    optimizer.param_groups[0]['lr'] = 0.001
+    #optimizer.param_groups[0]['lr'] = 0.001
     lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=4)
 
     if 0:
