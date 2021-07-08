@@ -24,6 +24,9 @@ from PIL import Image
 import cv2
 import datetime
 
+import glob
+from tqdm import tqdm
+
 from lib.core.evaluation import decode_preds
 from lib.utils.transforms import crop
 
@@ -43,8 +46,8 @@ def parse_args():
 import tensorflow as tf
 
 def main():
-    physical_devices = tf.config.experimental.list_physical_devices('GPU')
-    tf.config.experimental.set_memory_growth(physical_devices[0], True)
+    #physical_devices = tf.config.experimental.list_physical_devices('GPU')
+    #tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
     args = parse_args()
 
@@ -72,22 +75,39 @@ def main():
 
     #image_dir = 'D:/Datasets/IBUG/Test/01_Indoor/'
     #bbox_dir = 'D:/results/yolo_result/yolo_tiny_predictions/'
-    image_dir = 'D:/PhotolabImages/good-data/'
-    bbox_dir = 'D:/PhotolabImages/good-data_ellipses/txt/'
-    dst_dir = 'D:/PhotolabImages/good-data_hr_points/txt/'
+    
+    #image_dir = 'D:/PhotolabImages/good-data/'
+    #bbox_dir = 'D:/PhotolabImages/good-data_ellipses/txt/'
+    #dst_dir = 'D:/PhotolabImages/good-data_hr_points/txt/'
+
+    #image_dir = 'D:/Images/'
+    #bbox_dir = 'D:/Images/bbox/'
+    dst_dir = 'D:/test/'
+
+    #filenames = glob.glob('D:\\Datasets\\GenFaces\\regular\\*\\*.png')
+    #filenames = glob.glob('D:/test_dataset/*.jpg')
+    filenames = glob.glob('D:/Github/video-preprocessing/vox1-png/train/id10935#XmVc0YT4NoI#005818#006638.mp4/*.png')
 
     mean = np.array([0.485, 0.456, 0.406], dtype=np.float32)
     std = np.array([0.229, 0.224, 0.225], dtype=np.float32)
 
-    with torch.no_grad():
-        for filename in os.listdir(image_dir):
-            if filename.endswith(".jpg") or filename.endswith(".png") or filename.endswith(".jpeg"):
-                image_path = os.path.join(image_dir, filename)
-                image_path = os.path.normpath(image_path)
+    time_all = 0
+    img_num = 0    
 
-                bbox_path = os.path.join(bbox_dir, filename + '.txt')
-                bbox_path = os.path.normpath(bbox_path)
-                
+    with torch.no_grad():
+        #for filename in os.listdir(image_dir):
+        for filename in tqdm(filenames):
+            #if filename.endswith(".jpg") or filename.endswith(".png") or filename.endswith(".jpeg"):
+                #image_path = os.path.join(image_dir, filename)
+                #image_path = os.path.normpath(image_path)
+                image_path = filename
+
+                #bbox_path = os.path.join(bbox_dir, filename + '.txt')
+                #bbox_path = os.path.normpath(bbox_path)
+                #bbox_path = filename.replace('.png', '_bbox.txt')
+                bbox_path = filename.replace('train', 'train_bbox').replace('.png', '.txt')
+
+
                 f = open(bbox_path, 'r')
                 bbox_pts = f.readline().split(',')
 
@@ -118,10 +138,13 @@ def main():
                 img = torch.Tensor(img)
                 img = img[None, :]
 
-                start = datetime.datetime.now()
+                #start = datetime.datetime.now()
                 output = model(img)
-                stop = datetime.datetime.now()
-                print((stop - start).microseconds / 1000.0, 'ms...')
+                #stop = datetime.datetime.now()
+                #print((stop - start).microseconds / 1000.0, 'ms...')
+
+                #time_all = time_all + (stop - start).microseconds / 1000.0
+                #img_num = img_num + 1
 
                 score_map = output.data.cpu()
                 preds = decode_preds(score_map, [trf_inv])
@@ -135,21 +158,21 @@ def main():
                 r = int(bbox[0] + bbox[2] + 0.5 * bbox[2] / 2.0)
                 b = int(bbox[1] + bbox[3] + 0.5 * bbox[3] / 2.0)
 
-                #source = source[t:b, l:r, ...]
-                #ratio = 1024.0 / source.shape[1]
-                #source = cv2.resize(source, None, fx=ratio, fy=ratio)
-                #source = cv2.cvtColor(source, cv2.COLOR_RGB2BGR)
-                #print("here6")
-                #for k in pts:
-                #    source = cv2.circle(source, (int(ratio*(k[0] - l)), int(ratio*(k[1] - t))), 3, (0,255,0),-1,lineType=8)
-                #cv2.imwrite(dst_dir + filename, source)
+                source = source[t:b, l:r, ...]
+                ratio = 1024.0 / source.shape[1]
+                source = cv2.resize(source, None, fx=ratio, fy=ratio)
+                source = cv2.cvtColor(source, cv2.COLOR_RGB2BGR)
+                for k in pts:
+                    source = cv2.circle(source, (int(ratio*(k[0] - l)), int(ratio*(k[1] - t))), 3, (0,255,0),-1,lineType=8)
+                cv2.imwrite(dst_dir + os.path.basename(filename), source)
 
-                f = open(dst_dir + filename + '.txt', 'w')
-                for pt in pts:
-                    f.write(str(pt[0]) + ' ')
-                    f.write(str(pt[1]) + ' ')
-                f.close()
+#                f = open(filename.replace('.jpg', '_lm.txt'), 'w')
+#                for pt in pts:
+#                    f.write(str(pt[0]) + ' ')
+#                    f.write(str(pt[1]) + ' ')
+#                f.close()
 
+    #print('mean time', time_all / img_num)
 
 if __name__ == '__main__':
     main()

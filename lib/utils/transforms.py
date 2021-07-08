@@ -158,7 +158,7 @@ def transform_pixel(pt, center, scale, output_size, invert=0, rot=0):
 def transform_preds(coords, trf):
     homo_coords = torch.ones(coords.size(0), 3)
     homo_coords[:, :2] = coords
-    trf = torch.Tensor(trf)
+    trf = torch.tensor(trf)
     trf = torch.transpose(trf, 0, 1)
     homo_coords = torch.mm(homo_coords, trf)
     coords = homo_coords[:, 0:2]
