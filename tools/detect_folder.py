@@ -15,7 +15,7 @@ import sys
 sys.argv.append('--cfg')
 sys.argv.append('experiments/300w/face_alignment_300w_hrnet_w18_precise.yaml')
 sys.argv.append('--model-file')
-sys.argv.append('output/300W/face_alignment_300w_hrnet_w18_precise/model_best.pth')
+sys.argv.append('checkpoints/model_best.pth')
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 import lib.models as models
 from lib.config import config, update_config
