@@ -59,7 +59,8 @@ def main():
 
     gpus = list(config.GPUS)
     model = models.get_face_alignment_net(config)
-    model = nn.DataParallel(model, device_ids=gpus).cuda()
+    model.cuda()
+    #model = nn.DataParallel(model, device_ids=gpus).cuda()
 
     #load model
     state_dict = torch.load(args.model_file).state_dict()
@@ -67,14 +68,15 @@ def main():
         state_dict = state_dict['state_dict']
         model.load_state_dict(state_dict)
     else:
-        model.module.load_state_dict(state_dict)
+        #model.module.load_state_dict(state_dict)
+        model.load_state_dict(state_dict)
 
     model.eval()
     
     #dataset
-    root_dir = 'D:/Github/video-preprocessing/vox1-png'
+    root_dir = 'F:/Github/video-preprocessing/vox-png'
     dataset = VoxCelebDataset(root_dir, is_train=True)
-    dataloader = DataLoader(dataset, batch_size=2, num_workers=0)
+    dataloader = DataLoader(dataset, batch_size=6, num_workers=6)
 
     with torch.no_grad():
         for i, data in tqdm(enumerate(dataloader), total=len(dataloader)):
@@ -98,22 +100,22 @@ def main():
                     f.write(str(pt[1]) + ' ')
                 f.close()
 
-                ###########
-                bbox = cv2.boundingRect(pts)
-
-                l = int(max(bbox[0] - 0.5 * bbox[2] / 2.0, 0))
-                t = int(max(bbox[1] - 0.5 * bbox[3] / 2.0, 0))
-                r = int(bbox[0] + bbox[2] + 0.5 * bbox[2] / 2.0)
-                b = int(bbox[1] + bbox[3] + 0.5 * bbox[3] / 2.0)
-
-                source = cv2.imread(os.path.join(root_dir, 'train', path))
-                source = source[t:b, l:r, ...]
-                ratio = 1024.0 / source.shape[1]
-                source = cv2.resize(source, None, fx=ratio, fy=ratio)
-                for k in pts:
-                    source = cv2.circle(source, (int(ratio*(k[0] - l)), int(ratio*(k[1] - t))), 3, (0,255,0),-1,lineType=8)
-                cv2.imwrite('d:/test/' + os.path.basename(path), source)
-                #############
+                ############
+                #bbox = cv2.boundingRect(pts)
+                #
+                #l = int(max(bbox[0] - 0.5 * bbox[2] / 2.0, 0))
+                #t = int(max(bbox[1] - 0.5 * bbox[3] / 2.0, 0))
+                #r = int(bbox[0] + bbox[2] + 0.5 * bbox[2] / 2.0)
+                #b = int(bbox[1] + bbox[3] + 0.5 * bbox[3] / 2.0)
+                #
+                #source = cv2.imread(os.path.join(root_dir, 'train', path))
+                #source = source[t:b, l:r, ...]
+                #ratio = 1024.0 / source.shape[1]
+                #source = cv2.resize(source, None, fx=ratio, fy=ratio)
+                #for k in pts:
+                #    source = cv2.circle(source, (int(ratio*(k[0] - l)), int(ratio*(k[1] - t))), 3, (0,255,0),-1,lineType=8)
+                #cv2.imwrite('f:/test/' + os.path.basename(path), source)
+                ##############
 
 
 if __name__ == '__main__':

@@ -40,6 +40,7 @@ class VoxCelebDataset(data.Dataset):
     def load_bbox(self, bbox_path):
         f = open(bbox_path, 'r')
         bbox_pts = f.readline().split(',')
+        f.close()
 
         if len(bbox_pts) != 6:
             return None
