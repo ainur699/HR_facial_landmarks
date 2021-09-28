@@ -5,6 +5,7 @@ import cv2
 import glob
 import torch
 import torch.utils.data as data
+import json
 
 
 class VoxCelebDataset(data.Dataset):
@@ -70,3 +71,50 @@ class VoxCelebDataset(data.Dataset):
         out['trf_inv'] = trf_inv.astype(np.float32)
         out['path'] = os.path.join(*os.path.normpath(self.videos[idx]).split(os.sep)[-2:])
         return out
+
+
+class VideoDataset(data.Dataset):
+
+    def __init__(self, video_path):
+        self.capture = cv2.VideoCapture(video_path)
+
+        with open(video_path.replace('train','bbox_filtered').replace('.mp4', '.json')) as f:
+            bboxes = json.load(f)
+
+        self.bboxes = [ (k, v) for k, v in bboxes.items() if v ]
+
+        self.mean = np.array([0.485, 0.456, 0.406], dtype=np.float32)
+        self.std = np.array([0.229, 0.224, 0.225], dtype=np.float32)
+
+        self.pt_input = np.float32([[0,0], [511, 0], [511, 511]])
+        self.pt_target = np.float32([[0,0], [127, 0], [127, 127]])
+
+    def __len__(self):
+        return len(self.bboxes)
+
+    def __getitem__(self, i):
+        idx = int(self.bboxes[i][0])
+
+        bbox = self.bboxes[i][1]
+        bbox = np.float32(list(bbox.values()))
+
+        trf = cv2.getAffineTransform(bbox, self.pt_input)
+        trf_inv = cv2.getAffineTransform(self.pt_target, bbox)
+
+        self.capture.set(cv2.CAP_PROP_POS_FRAMES, idx)
+        ret, frame = self.capture.read()
+        if not ret:
+            raise Exception('None Image')
+        
+        frame = frame[..., ::-1]
+        frame = cv2.warpAffine(frame, trf, (512, 512))
+        frame = (frame/255 - self.mean) / self.std
+        frame = frame.transpose([2, 0, 1])
+        frame = frame.astype(np.float32)
+
+        data = {}
+        data['frame'] = frame
+        data['id'] = idx
+        data['trf_inv'] = trf_inv.astype(np.float32)
+
+        return data
