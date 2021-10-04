@@ -86,7 +86,7 @@ def main():
 
     #filenames = glob.glob('D:\\Datasets\\GenFaces\\regular\\*\\*.png')
     #filenames = glob.glob('D:/test_dataset/*.jpg')
-    filenames = glob.glob('D:/Github/video-preprocessing/vox1-png/train/id10935#XmVc0YT4NoI#005818#006638.mp4/*.png')
+    filenames = glob.glob('D:/photolab_test/imgs/*')
 
     mean = np.array([0.485, 0.456, 0.406], dtype=np.float32)
     std = np.array([0.229, 0.224, 0.225], dtype=np.float32)
@@ -105,7 +105,7 @@ def main():
                 #bbox_path = os.path.join(bbox_dir, filename + '.txt')
                 #bbox_path = os.path.normpath(bbox_path)
                 #bbox_path = filename.replace('.png', '_bbox.txt')
-                bbox_path = filename.replace('train', 'train_bbox').replace('.png', '.txt')
+                bbox_path = filename.replace('imgs', 'bbox').replace('.jpg', '.txt').replace('.jpeg', '.txt').replace('.png', '.txt')
 
 
                 f = open(bbox_path, 'r')
@@ -121,7 +121,7 @@ def main():
                 pt_target = np.float32([[0,0], [127, 0], [127, 127]])
 
                 trf = cv2.getAffineTransform(src, pt_input)
-                trf_inv = cv2.getAffineTransform(pt_target, src)
+                trf_inv = cv2.getAffineTransform(pt_target, src).astype(np.float32)
 
                 source = cv2.imread(image_path)
                 #source = tf.io.read_file(image_path)
@@ -151,26 +151,26 @@ def main():
 
                 # output
                 pts = preds[0].numpy()
-                bbox = cv2.boundingRect(pts)
+#                bbox = cv2.boundingRect(pts)
+#
+#                l = int(max(bbox[0] - 0.5 * bbox[2] / 2.0, 0))
+#                t = int(max(bbox[1] - 0.5 * bbox[3] / 2.0, 0))
+#                r = int(bbox[0] + bbox[2] + 0.5 * bbox[2] / 2.0)
+#                b = int(bbox[1] + bbox[3] + 0.5 * bbox[3] / 2.0)
+#
+#                source = source[t:b, l:r, ...]
+#                ratio = 1024.0 / source.shape[1]
+#                source = cv2.resize(source, None, fx=ratio, fy=ratio)
+#                source = cv2.cvtColor(source, cv2.COLOR_RGB2BGR)
+#                for k in pts:
+#                    source = cv2.circle(source, (int(ratio*(k[0] - l)), int(ratio*(k[1] - t))), 3, (0,255,0),-1,lineType=8)
+#                cv2.imwrite(dst_dir + os.path.basename(filename), source)
 
-                l = int(max(bbox[0] - 0.5 * bbox[2] / 2.0, 0))
-                t = int(max(bbox[1] - 0.5 * bbox[3] / 2.0, 0))
-                r = int(bbox[0] + bbox[2] + 0.5 * bbox[2] / 2.0)
-                b = int(bbox[1] + bbox[3] + 0.5 * bbox[3] / 2.0)
-
-                source = source[t:b, l:r, ...]
-                ratio = 1024.0 / source.shape[1]
-                source = cv2.resize(source, None, fx=ratio, fy=ratio)
-                source = cv2.cvtColor(source, cv2.COLOR_RGB2BGR)
-                for k in pts:
-                    source = cv2.circle(source, (int(ratio*(k[0] - l)), int(ratio*(k[1] - t))), 3, (0,255,0),-1,lineType=8)
-                cv2.imwrite(dst_dir + os.path.basename(filename), source)
-
-#                f = open(filename.replace('.jpg', '_lm.txt'), 'w')
-#                for pt in pts:
-#                    f.write(str(pt[0]) + ' ')
-#                    f.write(str(pt[1]) + ' ')
-#                f.close()
+                f = open(bbox_path.replace('bbox', 'landmarks'), 'w')
+                for pt in pts:
+                    f.write(str(pt[0]) + ' ')
+                    f.write(str(pt[1]) + ' ')
+                f.close()
 
     #print('mean time', time_all / img_num)
 
