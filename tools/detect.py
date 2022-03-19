@@ -22,6 +22,7 @@ import datetime
 
 import glob
 from tqdm import tqdm
+import os
 
 from lib.core.evaluation import decode_preds
 from lib.utils.transforms import crop
@@ -31,6 +32,7 @@ def parse_args():
 
     parser.add_argument('--cfg', default='experiments/300w/face_alignment_300w_hrnet_w18_precise.yaml', help='experiment configuration filename', type=str)
     parser.add_argument('--model-file', default='output/300W/face_alignment_300w_hrnet_w18_precise/model_best.pth', help='model parameters', type=str)
+    parser.add_argument('--source', default=None, help='source folder', type=str)
 
     args = parser.parse_args()
     update_config(config, args)
@@ -62,7 +64,7 @@ def main():
 
     model.eval()
 
-    filenames = glob.glob('D:/test_celeba/fear_synthetic/refs/target/imgs/*')
+    filenames = glob.glob(os.path.join(args.source, '*'))
 
     mean = np.array([0.485, 0.456, 0.406], dtype=np.float32)
     std = np.array([0.229, 0.224, 0.225], dtype=np.float32)
