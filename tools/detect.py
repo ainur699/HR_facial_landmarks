@@ -65,6 +65,8 @@ def main():
     model.eval()
 
     filenames = glob.glob(os.path.join(args.source, '*'))
+    result_dir = os.path.join(os.path.dirname(args.source), 'landmarks')
+    os.makedirs(result_dir, exist_ok=True)
 
     mean = np.array([0.485, 0.456, 0.406], dtype=np.float32)
     std = np.array([0.229, 0.224, 0.225], dtype=np.float32)
@@ -75,9 +77,9 @@ def main():
     with torch.no_grad():
         for filename in tqdm(filenames):
                 image_path = filename
-                bbox_path = filename.replace('imgs', 'bbox').replace('.jpg', '.txt').replace('.jpeg', '.txt').replace('.png', '.txt')
+                bbox_path = os.path.join(os.path.dirname(args.source), 'bbox', os.path.splitext(os.path.basename(filename))[0] + '.txt')
                 out_path = bbox_path.replace('bbox', 'landmarks')
-                if os.path.exists(out_path):
+                if os.path.exists(out_path) or not os.path.exists(bbox_path):
                     continue
 
                 f = open(bbox_path, 'r')
@@ -95,7 +97,7 @@ def main():
                 trf_inv = cv2.getAffineTransform(pt_target, src).astype(np.float32)
 
                 source = cv2.imread(image_path)                
-
+                
                 img = np.array(source[..., ::-1], dtype=np.float32)
                 img = cv2.warpAffine(img, trf, (512, 512))
                 img = (img/255.0 - mean) / std
